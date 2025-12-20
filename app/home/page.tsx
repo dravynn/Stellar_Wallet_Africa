@@ -3,8 +3,8 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { getStoredAddress, clearWallet, unlockWallet } from '@/lib/wallet';
-import { getBalance } from '@/lib/provider';
+import { getStoredAddress, clearWallet } from '@/lib/wallet';
+import { getBalance, fundAccount } from '@/lib/provider';
 import SecurityWarning from '@/components/SecurityWarning';
 
 export default function Home() {
