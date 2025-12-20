@@ -66,11 +66,15 @@ async function deriveKey(password: string, salt: Uint8Array): Promise<Uint8Array
     ['deriveBits']
   );
   
+  // Convert salt to ArrayBuffer for Web Crypto API compatibility
+  // Create a new ArrayBuffer to ensure proper type compatibility
+  const saltBuffer = new Uint8Array(salt).buffer;
+  
   // Derive key using PBKDF2
   const keyBits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
-      salt: salt,
+      salt: saltBuffer,
       iterations: 100000, // High iteration count for security
       hash: 'SHA-256'
     },
