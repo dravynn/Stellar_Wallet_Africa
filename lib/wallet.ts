@@ -13,6 +13,10 @@ export interface WalletData {
  * Creates a new Stellar wallet and encrypts the secret key
  */
 export async function createWallet(password: string): Promise<WalletData> {
+  if (typeof window === 'undefined') {
+    throw new Error('Wallet operations must be performed in the browser');
+  }
+  
   const keypair = StellarSdk.Keypair.random();
   const secretKey = keypair.secret();
   const publicKey = keypair.publicKey();
@@ -30,6 +34,10 @@ export async function createWallet(password: string): Promise<WalletData> {
  * Imports a wallet from secret key and encrypts it
  */
 export async function importWallet(secretKey: string, password: string): Promise<WalletData> {
+  if (typeof window === 'undefined') {
+    throw new Error('Wallet operations must be performed in the browser');
+  }
+  
   try {
     // Validate secret key by creating keypair
     const keypair = StellarSdk.Keypair.fromSecret(secretKey);
@@ -51,6 +59,10 @@ export async function importWallet(secretKey: string, password: string): Promise
  * Unlocks wallet by decrypting secret key
  */
 export async function unlockWallet(password: string): Promise<StellarSdk.Keypair> {
+  if (typeof window === 'undefined') {
+    throw new Error('Wallet operations must be performed in the browser');
+  }
+  
   const encryptedSecret = localStorage.getItem(STORAGE_KEY);
   
   if (!encryptedSecret) {
