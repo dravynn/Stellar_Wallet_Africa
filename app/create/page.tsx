@@ -31,8 +31,8 @@ export default function CreateWallet() {
     setLoading(true);
     try {
       const walletData = await createWallet(password);
-      setMnemonic(walletData.address); // For display, we'll show the address
-      // In a real app, show the mnemonic here for backup
+      setMnemonic(walletData.publicKey); // For display, we'll show the public key
+      // In a real app, show the secret key here for backup
     } catch (err: any) {
       setError(err.message || 'Failed to create wallet');
     } finally {
