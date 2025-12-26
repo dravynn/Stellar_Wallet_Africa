@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getStoredAddress, unlockWallet } from '@/lib/wallet';
 import { getBalance, sendPayment } from '@/lib/provider';
+import { getContacts, type Contact } from '@/lib/contacts';
 import SecurityWarning from '@/components/SecurityWarning';
 
 export default function Send() {
@@ -13,9 +14,11 @@ export default function Send() {
   const [balance, setBalance] = useState<string>('0.00');
   const [to, setTo] = useState('');
   const [amount, setAmount] = useState('');
+  const [memo, setMemo] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  const [showContacts, setShowContacts] = useState(false);
   useEffect(() => {
     const storedAddress = getStoredAddress();
     if (!storedAddress) {
@@ -71,7 +74,7 @@ export default function Send() {
     setLoading(true);
     try {
       const keypair = await unlockWallet(password);
-      await sendPayment(keypair, to, amount);
+      await sendPayment(keypair, to, amount, memo);
       router.push('/home');
     } catch (err: any) {
       setError(err.message || 'Failed to send transaction');
@@ -114,9 +117,41 @@ export default function Send() {
 
           <form onSubmit={handleSend} className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-earth-700 mb-2">
-                Recipient Address
-              </label>
+              <div className="flex items-center justify-between mb-2">
+                <label className="block text-sm font-medium text-earth-700">
+                  Recipient Address
+                </label>
+                <button
+                  type="button"
+                  onClick={() => setShowContacts(!showContacts)}
+                  className="text-xs text-primary-500 hover:text-primary-600"
+                >
+                  {showContacts ? 'Hide' : 'Show'} Contacts
+                </button>
+              </div>
+              {showContacts && (
+                <div className="mb-2 p-2 bg-earth-50 rounded-lg max-h-40 overflow-y-auto">
+                  {getContacts().length === 0 ? (
+                    <p className="text-xs text-earth-500 text-center py-2">No contacts saved</p>
+                  ) : (
+                    getContacts().map((contact: Contact) => (
+                      <button
+                        key={contact.id}
+                        type="button"
+                        onClick={() => {
+                          setTo(contact.address);
+                          if (contact.memo) setMemo(contact.memo);
+                          setShowContacts(false);
+                        }}
+                        className="w-full text-left p-2 hover:bg-earth-100 rounded text-sm"
+                      >
+                        <div className="font-semibold text-earth-800">{contact.name}</div>
+                        <div className="text-xs text-earth-600 font-mono">{contact.address.slice(0, 20)}...</div>
+                      </button>
+                    ))
+                  )}
+                </div>
+              )}
               <input
                 type="text"
                 value={to}
@@ -142,6 +177,22 @@ export default function Send() {
                 required
                 disabled={loading}
               />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-earth-700 mb-2">
+                Memo (Optional)
+              </label>
+              <input
+                type="text"
+                value={memo}
+                onChange={(e) => setMemo(e.target.value)}
+                className="w-full px-4 py-3 border-2 border-earth-200 rounded-lg focus:border-primary-500 focus:outline-none"
+                placeholder="Optional memo"
+                maxLength={28}
+                disabled={loading}
+              />
+              <p className="text-xs text-earth-500 mt-1">Max 28 characters</p>
             </div>
 
             <div>

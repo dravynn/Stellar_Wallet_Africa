@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getStoredAddress, clearWallet } from '@/lib/wallet';
 import { getBalance, fundAccount, getAllBalances } from '@/lib/provider';
+import { getCurrentNetwork } from '@/lib/network';
 import SecurityWarning from '@/components/SecurityWarning';
 import TransactionList from '@/components/TransactionList';
 
@@ -15,6 +16,7 @@ export default function Home() {
   const [allBalances, setAllBalances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [network, setNetwork] = useState<string>('testnet');
 
   useEffect(() => {
     const storedAddress = getStoredAddress();
@@ -23,6 +25,7 @@ export default function Home() {
       return;
     }
     setAddress(storedAddress);
+    setNetwork(getCurrentNetwork());
     loadBalance(storedAddress);
   }, [router]);
 
@@ -115,7 +118,9 @@ export default function Home() {
             <p className="text-5xl font-bold text-primary-600 mb-2">
               {loading ? '...' : `${balance} XLM`}
             </p>
-            <p className="text-earth-500 text-sm">Stellar Testnet</p>
+            <p className="text-earth-500 text-sm">
+              {network === 'mainnet' ? 'Stellar Mainnet' : 'Stellar Testnet'}
+            </p>
           </div>
 
           <div className="bg-earth-50 rounded-lg p-4 mb-4">
@@ -161,7 +166,7 @@ export default function Home() {
           </Link>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <button
             onClick={handleFundAccount}
             disabled={refreshing}
@@ -175,11 +180,35 @@ export default function Home() {
           >
             Export Key
           </Link>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
           <Link
             href="/account"
             className="px-6 py-4 bg-primary-400 hover:bg-primary-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-center"
           >
             Account
+          </Link>
+          <Link
+            href="/trustlines"
+            className="px-6 py-4 bg-accent-400 hover:bg-accent-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-center"
+          >
+            Trustlines
+          </Link>
+          <Link
+            href="/contacts"
+            className="px-6 py-4 bg-secondary-400 hover:bg-secondary-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-center"
+          >
+            Contacts
+          </Link>
+        </div>
+
+        <div className="mt-4">
+          <Link
+            href="/settings"
+            className="block w-full px-6 py-3 bg-earth-200 hover:bg-earth-300 text-earth-800 rounded-lg font-semibold text-center transition-colors"
+          >
+            Settings
           </Link>
         </div>
       </div>

@@ -1,11 +1,13 @@
 import * as StellarSdk from '@stellar/stellar-sdk';
-
-// Stellar testnet Horizon server
-const HORIZON_URL = 'https://horizon-testnet.stellar.org';
-const FRIENDBOT_URL = 'https://friendbot.stellar.org';
+import { getNetworkConfig } from './network';
 
 export function getServer(): StellarSdk.Horizon.Server {
-  return new StellarSdk.Horizon.Server(HORIZON_URL);
+  const config = getNetworkConfig();
+  return new StellarSdk.Horizon.Server(config.horizonUrl);
+}
+
+export function getNetworkPassphrase(): string {
+  return getNetworkConfig().networkPassphrase;
 }
 
 export async function getBalance(publicKey: string): Promise<string> {
@@ -91,7 +93,11 @@ export async function getTransactions(publicKey: string, limit: number = 10): Pr
 }
 
 export async function fundAccount(publicKey: string): Promise<void> {
-  const response = await fetch(`${FRIENDBOT_URL}?addr=${publicKey}`);
+  const config = getNetworkConfig();
+  if (!config.friendbotUrl) {
+    throw new Error('Friendbot is only available on testnet');
+  }
+  const response = await fetch(`${config.friendbotUrl}?addr=${publicKey}`);
   if (!response.ok) {
     throw new Error('Failed to fund account from friendbot');
   }
@@ -100,14 +106,15 @@ export async function fundAccount(publicKey: string): Promise<void> {
 export async function sendPayment(
   keypair: StellarSdk.Keypair,
   destination: string,
-  amount: string
+  amount: string,
+  memo?: string
 ): Promise<string> {
   try {
     const server = getServer();
     const sourceAccount = await server.loadAccount(keypair.publicKey());
     
-    const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
-      networkPassphrase: StellarSdk.Networks.TESTNET,
+    const txBuilder = new StellarSdk.TransactionBuilder(sourceAccount, {
+      networkPassphrase: getNetworkPassphrase(),
       fee: StellarSdk.BASE_FEE,
     })
       .addOperation(
@@ -115,6 +122,46 @@ export async function sendPayment(
           destination: destination,
           asset: StellarSdk.Asset.native(),
           amount: amount,
+        })
+      )
+      .setTimeout(300);
+
+    // Add memo if provided
+    if (memo && memo.trim()) {
+      txBuilder.addMemo(StellarSdk.Memo.text(memo.trim()));
+    }
+
+    const transaction = txBuilder.build();
+
+    transaction.sign(keypair);
+
+    const result = await server.submitTransaction(transaction);
+    return result.hash;
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to send payment');
+  }
+}
+
+export async function addTrustline(
+  keypair: StellarSdk.Keypair,
+  assetCode: string,
+  assetIssuer: string,
+  limit?: string
+): Promise<string> {
+  try {
+    const server = getServer();
+    const sourceAccount = await server.loadAccount(keypair.publicKey());
+    
+    const asset = new StellarSdk.Asset(assetCode, assetIssuer);
+    
+    const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+      networkPassphrase: getNetworkPassphrase(),
+      fee: StellarSdk.BASE_FEE,
+    })
+      .addOperation(
+        StellarSdk.Operation.changeTrust({
+          asset: asset,
+          limit: limit || '922337203685.4775807', // Max limit
         })
       )
       .setTimeout(300)
@@ -125,6 +172,39 @@ export async function sendPayment(
     const result = await server.submitTransaction(transaction);
     return result.hash;
   } catch (error: any) {
-    throw new Error(error.message || 'Failed to send payment');
+    throw new Error(error.message || 'Failed to add trustline');
+  }
+}
+
+export async function removeTrustline(
+  keypair: StellarSdk.Keypair,
+  assetCode: string,
+  assetIssuer: string
+): Promise<string> {
+  try {
+    const server = getServer();
+    const sourceAccount = await server.loadAccount(keypair.publicKey());
+    
+    const asset = new StellarSdk.Asset(assetCode, assetIssuer);
+    
+    const transaction = new StellarSdk.TransactionBuilder(sourceAccount, {
+      networkPassphrase: getNetworkPassphrase(),
+      fee: StellarSdk.BASE_FEE,
+    })
+      .addOperation(
+        StellarSdk.Operation.changeTrust({
+          asset: asset,
+          limit: '0', // Setting limit to 0 removes the trustline
+        })
+      )
+      .setTimeout(300)
+      .build();
+
+    transaction.sign(keypair);
+
+    const result = await server.submitTransaction(transaction);
+    return result.hash;
+  } catch (error: any) {
+    throw new Error(error.message || 'Failed to remove trustline');
   }
 }
