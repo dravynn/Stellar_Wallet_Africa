@@ -1,4 +1,4 @@
-# Hot Wallet - Non-Custodial Stellar Wallet
+# FREEDOM - Non-Custodial Stellar Wallet
 
 A modern, non-custodial Stellar wallet built with Next.js and TypeScript, featuring a beautiful Ghana-inspired UI. This is an MVP wallet for the Stellar testnet.
 

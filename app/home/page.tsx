@@ -74,7 +74,7 @@ export default function Home() {
       <div className="max-w-2xl mx-auto">
         <div className="flex items-center justify-between mb-6">
           <h1 className="text-3xl font-bold bg-gradient-to-r from-primary-500 via-secondary-500 to-accent-500 bg-clip-text text-transparent">
-            Hot Wallet
+            FREEDOM
           </h1>
           <button
             onClick={handleLogout}

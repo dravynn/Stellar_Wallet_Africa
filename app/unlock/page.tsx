@@ -30,7 +30,7 @@ export default function Unlock() {
       <div className="max-w-md w-full">
         <div className="text-center mb-8">
           <h1 className="text-4xl font-bold bg-gradient-to-r from-primary-500 via-secondary-500 to-accent-500 bg-clip-text text-transparent mb-2">
-            Hot Wallet
+            FREEDOM
           </h1>
           <p className="text-earth-600">Unlock your wallet</p>
         </div>
