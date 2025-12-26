@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Stellar Wallet - Ghana",
-  description: "A modern Stellar wallet for Ghana",
+  title: "FREEDOM - Stellar Wallet",
+  description: "FREEDOM - A modern Stellar wallet for Ghana",
 };
 
 export default function RootLayout({
