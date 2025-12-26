@@ -24,6 +24,72 @@ export async function getBalance(publicKey: string): Promise<string> {
   }
 }
 
+export async function getAllBalances(publicKey: string): Promise<any[]> {
+  try {
+    const server = getServer();
+    const account = await server.loadAccount(publicKey);
+    return account.balances;
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+}
+
+export interface Transaction {
+  id: string;
+  type: string;
+  amount: string;
+  asset: string;
+  date: string;
+  hash: string;
+  from: string;
+  to: string;
+}
+
+export async function getTransactions(publicKey: string, limit: number = 10): Promise<Transaction[]> {
+  try {
+    const server = getServer();
+    const transactions = await server.transactions().forAccount(publicKey).limit(limit).call();
+    
+    return transactions.records.map((tx: any) => {
+      const operations = tx.operations || [];
+      const paymentOp = operations.find((op: any) => op.type === 'payment');
+      
+      let type = 'Other';
+      let amount = '0';
+      let asset = 'XLM';
+      let from = '';
+      let to = '';
+      
+      if (paymentOp) {
+        type = paymentOp.from === publicKey ? 'Sent' : 'Received';
+        amount = paymentOp.amount || '0';
+        asset = paymentOp.asset_type === 'native' ? 'XLM' : `${paymentOp.asset_code}:${paymentOp.asset_issuer}`;
+        from = paymentOp.from || '';
+        to = paymentOp.to || '';
+      }
+      
+      return {
+        id: tx.id,
+        type,
+        amount,
+        asset,
+        date: new Date(tx.created_at).toLocaleDateString(),
+        hash: tx.hash,
+        from,
+        to,
+      };
+    });
+  } catch (error: any) {
+    if (error.response?.status === 404) {
+      return [];
+    }
+    throw error;
+  }
+}
+
 export async function fundAccount(publicKey: string): Promise<void> {
   const response = await fetch(`${FRIENDBOT_URL}?addr=${publicKey}`);
   if (!response.ok) {

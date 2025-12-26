@@ -1,14 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-
-interface Transaction {
-  id: string;
-  type: string;
-  amount: string;
-  date: string;
-  hash: string;
-}
+import { getTransactions, type Transaction } from '@/lib/provider';
 
 interface TransactionListProps {
   publicKey: string;
@@ -27,9 +20,8 @@ export default function TransactionList({ publicKey }: TransactionListProps) {
   const loadTransactions = async () => {
     setLoading(true);
     try {
-      // In a real app, you would fetch from Horizon API
-      // For now, we'll show a placeholder
-      setTransactions([]);
+      const txs = await getTransactions(publicKey, 10);
+      setTransactions(txs);
     } catch (error) {
       console.error('Failed to load transactions:', error);
     } finally {
@@ -63,8 +55,18 @@ export default function TransactionList({ publicKey }: TransactionListProps) {
               </div>
               <div className="text-right">
                 <p className={`font-bold ${tx.type === 'Received' ? 'text-accent-600' : 'text-primary-600'}`}>
-                  {tx.type === 'Received' ? '+' : '-'}{tx.amount} XLM
+                  {tx.type === 'Received' ? '+' : '-'}{tx.amount} {tx.asset}
                 </p>
+                {tx.hash && (
+                  <a
+                    href={`https://stellar.expert/explorer/testnet/tx/${tx.hash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-earth-500 hover:text-primary-500"
+                  >
+                    View on explorer
+                  </a>
+                )}
               </div>
             </div>
           ))}

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { QRCodeSVG } from 'qrcode.react';
 import { getStoredAddress } from '@/lib/wallet';
 
 export default function Receive() {
@@ -52,6 +53,13 @@ export default function Receive() {
 
         <div className="bg-white rounded-2xl shadow-xl p-8 border-2 border-earth-200">
           <div className="text-center mb-6">
+            {/* QR Code */}
+            <div className="flex justify-center mb-4">
+              <div className="bg-white p-4 rounded-lg border-2 border-earth-200">
+                <QRCodeSVG value={address || ''} size={200} />
+              </div>
+            </div>
+            
             <div className="bg-earth-50 rounded-lg p-6 mb-4">
               <p className="text-xs text-earth-600 mb-2">Your Wallet Address</p>
               <p className="text-sm font-mono text-earth-800 break-all">{address}</p>

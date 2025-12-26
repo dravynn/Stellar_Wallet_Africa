@@ -4,13 +4,15 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { getStoredAddress, clearWallet } from '@/lib/wallet';
-import { getBalance, fundAccount } from '@/lib/provider';
+import { getBalance, fundAccount, getAllBalances } from '@/lib/provider';
 import SecurityWarning from '@/components/SecurityWarning';
+import TransactionList from '@/components/TransactionList';
 
 export default function Home() {
   const router = useRouter();
   const [address, setAddress] = useState<string | null>(null);
   const [balance, setBalance] = useState<string>('0.00');
+  const [allBalances, setAllBalances] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -28,6 +30,10 @@ export default function Home() {
     try {
       const bal = await getBalance(addr);
       setBalance(parseFloat(bal).toFixed(4));
+      
+      // Load all balances (multi-asset support)
+      const balances = await getAllBalances(addr);
+      setAllBalances(balances);
     } catch (error) {
       console.error('Failed to load balance:', error);
     } finally {
@@ -112,13 +118,35 @@ export default function Home() {
             <p className="text-earth-500 text-sm">Stellar Testnet</p>
           </div>
 
-          <div className="bg-earth-50 rounded-lg p-4">
+          <div className="bg-earth-50 rounded-lg p-4 mb-4">
             <p className="text-xs text-earth-600 mb-1">Wallet Address</p>
             <p className="text-sm font-mono text-earth-800 break-all">{address}</p>
           </div>
+
+          {/* Multi-asset balances */}
+          {allBalances.length > 0 && (
+            <div className="mt-4">
+              <p className="text-sm font-semibold text-earth-700 mb-2">All Assets</p>
+              <div className="space-y-2">
+                {allBalances.map((bal: any, index: number) => {
+                  const assetName = bal.asset_type === 'native' 
+                    ? 'XLM' 
+                    : `${bal.asset_code} (${bal.asset_issuer?.slice(0, 8)}...)`;
+                  return (
+                    <div key={index} className="flex justify-between items-center p-2 bg-earth-50 rounded">
+                      <span className="text-sm text-earth-700">{assetName}</span>
+                      <span className="text-sm font-semibold text-earth-800">{parseFloat(bal.balance).toFixed(7)}</span>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <TransactionList publicKey={address} />
+
+        <div className="grid grid-cols-2 gap-4 mb-4">
           <Link
             href="/send"
             className="px-6 py-4 bg-primary-500 hover:bg-primary-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-center"
@@ -131,6 +159,9 @@ export default function Home() {
           >
             Receive
           </Link>
+        </div>
+
+        <div className="grid grid-cols-3 gap-4">
           <button
             onClick={handleFundAccount}
             disabled={refreshing}
@@ -138,6 +169,18 @@ export default function Home() {
           >
             {refreshing ? 'Funding...' : 'Fund'}
           </button>
+          <Link
+            href="/export"
+            className="px-6 py-4 bg-earth-500 hover:bg-earth-600 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-center"
+          >
+            Export Key
+          </Link>
+          <Link
+            href="/account"
+            className="px-6 py-4 bg-primary-400 hover:bg-primary-500 text-white rounded-lg font-semibold shadow-lg hover:shadow-xl transition-all duration-200 transform hover:scale-105 text-center"
+          >
+            Account
+          </Link>
         </div>
       </div>
     </main>
